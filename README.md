@@ -28,7 +28,7 @@ The result is a personal cloud that I can use from my **iPhone, laptop, or any w
 
 ---
 
-## 🏗️ What the setup looks like
+##  What the setup looks like
 
 ```text
                     Internet
@@ -59,7 +59,7 @@ I intentionally keep Nextcloud inside its own VM rather than installing it direc
 
 ---
 
-## 🧰 Technology used
+##  Technology used
 
 | Technology | What I used it for |
 |---|---|
@@ -112,7 +112,7 @@ I also learned an important lesson here: **a configuration file saying something
 
 ---
 
-## 💾 The storage problem I ran into
+##  The storage problem I ran into
 
 The VM originally had a **50 GB** virtual disk.
 
@@ -162,7 +162,7 @@ This was one of the most useful parts of the project because it made the differe
 
 ---
 
-## 🌐 Remote access
+##  Remote access
 
 I wanted to be able to use the cloud even when I wasn't at home.
 
@@ -190,7 +190,7 @@ That caught issues that wouldn't have been obvious from inside the LAN.
 
 ---
 
-## 📱 iPhone integration
+##  iPhone integration
 
 One of the reasons I wanted this project in the first place was to have an easy place for my phone photos and files.
 
@@ -202,7 +202,7 @@ So instead of thinking about the server as just a Linux VM, it has become someth
 
 ---
 
-## 🛠️ Troubleshooting I worked through
+##  Troubleshooting I worked through
 
 This project wasn't a one-command installation. A lot of the learning came from fixing things when they didn't work.
 
@@ -240,7 +240,7 @@ These issues were useful because they forced me to troubleshoot the entire path 
 
 ---
 
-## 💿 Backup and recovery
+##  Backup and recovery
 
 I created backups at several levels during the project:
 
@@ -266,7 +266,7 @@ Primary server
 
 ---
 
-## 📚 What I learned
+##  What I learned
 
 This project gave me practical experience with:
 
@@ -298,7 +298,7 @@ That's the part of systems administration I wanted to learn.
 
 ---
 
-## 🚧 What's next
+##  What's next
 
 This project is still evolving. Some things I want to add:
 
@@ -315,7 +315,7 @@ This project is still evolving. Some things I want to add:
 
 ---
 
-## 📁 Documentation
+##  Documentation
 
 More detailed notes are available here:
 
@@ -325,7 +325,7 @@ More detailed notes are available here:
 
 ---
 
-## 📜 License
+## License
 
 This project is released under the **MIT License**. See [LICENSE](LICENSE).
 
@@ -333,7 +333,7 @@ The license applies to the original documentation, scripts, and configuration ex
 
 ---
 
-## ⚠️ Important
+##  Important
 
 This repository documents a personal homelab. Real credentials, private keys, tokens, database passwords, and other sensitive information are intentionally **not** included.
 
@@ -341,6 +341,6 @@ If you build something similar, don't copy credentials or expose services withou
 
 ---
 
-**Status:** 🟢 Running and actively used
+**Status:**  Running and actively used
 
 Built as a hands-on systems administration project.
