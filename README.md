@@ -2,9 +2,15 @@
 
 > **A homelab project I built to learn systems administration — and ended up using as my own private cloud.**
 
-This started as a simple question: **Can I build my own cloud instead of relying completely on someone else's storage?**
+## Why I built this
 
-I already had a Proxmox machine at home, so I decided to turn it into a proper learning project. I deployed Ubuntu Server, installed Nextcloud, exposed it securely over HTTPS, locked down SSH, configured a firewall and Fail2Ban, and eventually expanded the VM from 50 GB to 500 GB.
+This is one of my self-study projects around **self-hosting and private cloud infrastructure**.
+
+I wanted to understand what it actually takes to host and protect my own data instead of treating cloud storage as a black box. Personal data such as photos, documents, and files is an important asset, so I wanted to learn how I could keep that data in a private environment that I control while still being able to access it from anywhere.
+
+The goal isn't simply to avoid cloud services. The bigger goal is to understand the infrastructure behind a private cloud: **where the data lives, how users access it, how the server is secured, how storage is managed, and how the data can be backed up and recovered.**
+
+I already had a Proxmox machine at home, so I turned it into a proper learning project. I deployed Ubuntu Server, installed Nextcloud, exposed it securely over HTTPS, locked down SSH, configured a firewall and Fail2Ban, and eventually expanded the VM from 50 GB to 500 GB.
 
 The result is a personal cloud that I can use from my **iPhone, laptop, or any web browser**.
 
