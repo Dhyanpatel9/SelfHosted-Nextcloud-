@@ -1,176 +1,340 @@
-# Self-Hosted Nextcloud Homelab
+# Self-Hosted Nextcloud ☁️
 
-A personal systems administration and self-hosting project built to provide a private cloud for files and photos while developing practical Linux, virtualization, networking, storage, security, and troubleshooting skills.
+> **A homelab project I built to learn systems administration — and ended up using as my own private cloud.**
 
-## Project Overview
+This started as a simple question: **Can I build my own cloud instead of relying completely on someone else's storage?**
 
-This project runs Nextcloud inside an Ubuntu Server virtual machine hosted on Proxmox. The server is reachable remotely through a domain name and is protected with Linux security controls.
+I already had a Proxmox machine at home, so I decided to turn it into a proper learning project. I deployed Ubuntu Server, installed Nextcloud, exposed it securely over HTTPS, locked down SSH, configured a firewall and Fail2Ban, and eventually expanded the VM from 50 GB to 500 GB.
 
-The project started as a hands-on way to learn systems administration and evolved into a useful personal cloud that can be accessed from an iPhone, laptop, and web browser.
+The result is a personal cloud that I can use from my **iPhone, laptop, or any web browser**.
 
-## Architecture
+---
+
+## 📸 What I can do with it
+
+- Upload photos from my iPhone
+- Access my files from my laptop through a browser
+- Access Nextcloud remotely when I'm away from home
+- Store documents and personal files on my own server
+- Manage the server remotely through SSH
+- Back up the VM through Proxmox
+- Keep learning Linux and infrastructure by actually running the service myself
+
+---
+
+## 🏗️ What the setup looks like
 
 ```text
-                         Internet
-                            |
-                     Public DNS record
-                            |
-                    cloud.dhyan09.com
-                            |
-                     Home Router/NAT
-                            |
-                    Proxmox VE Host
-                            |
-                  Ubuntu Server VM
-                         VM 100
-                            |
-        +-------------------+-------------------+
-        |                   |                   |
-      Nextcloud          SSH + UFW          Fail2Ban
-        |
-   User files/photos
+                    Internet
+                       │
+                  Public DNS
+                       │
+              cloud.<my-domain>
+                       │
+                 Home Router
+                       │
+                  Proxmox VE
+                       │
+              ┌───────────────┐
+              │ Ubuntu Server │
+              │     VM 100    │
+              ├───────────────┤
+              │   Nextcloud   │
+              │    Apache     │
+              │    MariaDB    │
+              │     UFW       │
+              │   Fail2Ban    │
+              └───────────────┘
+                  │       │
+                iPhone   Laptop
 ```
 
-## Environment
+I intentionally keep Nextcloud inside its own VM rather than installing it directly on the Proxmox host. That gives me a cleaner separation between the hypervisor and the application.
 
-| Component | Role |
+---
+
+## 🧰 Technology used
+
+| Technology | What I used it for |
 |---|---|
-| Proxmox VE | Hypervisor / virtualization platform |
-| Ubuntu Server | Guest operating system |
-| Nextcloud | Private cloud platform |
-| Apache | Web server |
-| MariaDB | Nextcloud database |
-| UFW | Host firewall |
-| Fail2Ban | Brute-force protection |
-| Let's Encrypt | TLS/HTTPS certificates |
-| DNS | Public hostname for remote access |
-| iPhone / Laptop | Client devices |
+| **Proxmox VE** | Virtualization and VM management |
+| **Ubuntu Server** | Nextcloud server OS |
+| **Nextcloud** | Private cloud / file storage |
+| **Apache** | Web server |
+| **PHP** | Nextcloud application runtime |
+| **MariaDB** | Nextcloud database |
+| **UFW** | Host firewall |
+| **Fail2Ban** | SSH brute-force protection |
+| **Let's Encrypt** | HTTPS/TLS certificate |
+| **DNS** | Public hostname / remote access |
+| **LVM + ext4** | Linux storage management |
+| **SSH** | Remote administration |
 
-## Storage Expansion
+---
 
-The Nextcloud VM originally had a **50 GiB** virtual disk. The virtual disk was expanded to **500 GiB** in Proxmox.
+## 🔐 Security
 
-The guest operating system was then expanded in stages:
+Because the server is reachable from the Internet, I didn't want to simply expose a web server and hope for the best.
 
-1. Expanded the Proxmox VM disk from 50 GiB to 500 GiB.
-2. Used `growpart` to expand `/dev/sda3`.
-3. Used `pvresize /dev/sda3` to make the additional capacity available to LVM.
-4. Expanded the Ubuntu logical volume.
-5. Verified the resulting filesystem with `df -h /`.
+The main protections I configured were:
 
-Final verification showed approximately **490 GiB** available to the root filesystem, with only about **8.5 GiB** used at the time of verification.
+- HTTPS/TLS for web traffic
+- SSH public-key authentication
+- SSH password authentication disabled
+- Root SSH login disabled
+- UFW with **deny-by-default** inbound traffic
+- Only required inbound services exposed
+- Fail2Ban protecting SSH authentication
+- Limited SSH authentication attempts
+- X11 forwarding disabled
+- TCP forwarding disabled
+- Regular service/status verification
 
-Example verification commands:
+For example, I verify the firewall with:
 
 ```bash
-lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINTS
-sudo pvs
-df -h /
+sudo ufw status verbose
 ```
 
-## Security Hardening
-
-### Fail2Ban
-
-Fail2Ban was configured with an SSH jail and verified with:
+and Fail2Ban with:
 
 ```bash
-sudo fail2ban-client status
 sudo fail2ban-client status sshd
 ```
 
-At the time of verification, the SSH jail was active with no failed authentication attempts and no banned addresses.
+I also learned an important lesson here: **a configuration file saying something is enabled doesn't necessarily mean the running service is using that setting.** I used `sshd -T` to check the effective SSH configuration.
 
-### Firewall
+---
 
-UFW is used to restrict inbound traffic to services that are intentionally exposed.
+## 💾 The storage problem I ran into
 
-### HTTPS
+The VM originally had a **50 GB** virtual disk.
 
-The Nextcloud service is configured for HTTPS using a TLS certificate. The public hostname used during the project is `cloud.dhyan09.com`.
+That was fine for installing Nextcloud, but once I started thinking about photos and documents, I knew I needed more space.
 
-Sensitive values such as passwords, private keys, tokens, and authentication secrets are intentionally excluded from this repository.
+I expanded the virtual disk in Proxmox to **500 GB**.
 
-## Client Access
+But Ubuntu still reported the old size.
 
-### iPhone
+That's where the Linux storage layers became a real-world learning exercise.
 
-Nextcloud is accessed from an iPhone using the mobile application. This provides a convenient way to upload and access photos and files from the phone without depending entirely on third-party cloud storage.
+I had to expand them one at a time:
 
-### Laptop / PC
+```text
+Proxmox virtual disk
+        ↓
+/dev/sda
+        ↓
+/dev/sda3
+        ↓
+LVM physical volume
+        ↓
+ubuntu-vg
+        ↓
+ubuntu-lv
+        ↓
+ext4 filesystem
+```
 
-Nextcloud can also be accessed through a normal web browser, making the service usable from computers without installing a dedicated client.
+The commands I used were:
 
-## Skills Demonstrated
+```bash
+sudo growpart /dev/sda 3
+sudo pvresize /dev/sda3
+sudo lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+sudo resize2fs /dev/ubuntu-vg/ubuntu-lv
+```
 
-This project demonstrates practical experience with:
+Final result:
 
-- Linux server administration
+```text
+Filesystem       Size   Used   Avail
+/                ~490G  ~8.5G  ~462G
+```
+
+This was one of the most useful parts of the project because it made the difference between **knowing what LVM is** and actually having to use it.
+
+---
+
+## 🌐 Remote access
+
+I wanted to be able to use the cloud even when I wasn't at home.
+
+The final flow is roughly:
+
+```text
+Phone / Laptop
+      ↓
+HTTPS
+      ↓
+Public DNS
+      ↓
+Home Router
+      ↓
+Proxmox
+      ↓
+Ubuntu VM
+      ↓
+Nextcloud
+```
+
+I tested the setup from a different network using a phone hotspot rather than only testing it from my home Wi-Fi.
+
+That caught issues that wouldn't have been obvious from inside the LAN.
+
+---
+
+## 📱 iPhone integration
+
+One of the reasons I wanted this project in the first place was to have an easy place for my phone photos and files.
+
+I configured the Nextcloud iPhone app so I can upload photos directly to my server.
+
+I can then access those files from the Nextcloud web interface on my laptop.
+
+So instead of thinking about the server as just a Linux VM, it has become something I actually use day-to-day.
+
+---
+
+## 🛠️ Troubleshooting I worked through
+
+This project wasn't a one-command installation. A lot of the learning came from fixing things when they didn't work.
+
+### MariaDB authentication
+
+The Nextcloud database account initially rejected the credentials used by the backup command. I checked the MariaDB user, authentication plugin, and grants, corrected the credentials, and verified access with:
+
+```bash
+mysql -u nextcloud -p -e "SELECT 1;"
+```
+
+### Interrupted backup archive
+
+An interrupted `tar` operation left an incomplete archive. Trying to inspect it produced an EOF error.
+
+I recreated the archive and verified it with:
+
+```bash
+sudo tar -tzf /backup/nextcloud/nextcloud-files.tar.gz >/dev/null && echo "Archive OK"
+```
+
+### SSH hardening
+
+Cloud-init had its own SSH configuration, so I checked the **effective** configuration rather than relying on one file:
+
+```bash
+sudo sshd -T
+```
+
+### Remote access
+
+I tested DNS, public IP resolution, port forwarding, firewall rules, and SSH access from outside my home network.
+
+These issues were useful because they forced me to troubleshoot the entire path instead of assuming the application itself was the problem.
+
+---
+
+## 💿 Backup and recovery
+
+I created backups at several levels during the project:
+
+- MariaDB database dump
+- Nextcloud file/application archive
+- Proxmox VM backup
+
+I also learned that **having a backup isn't the same as having a recovery plan**.
+
+The current Proxmox backup is still tied to the same physical host, so my next major improvement is a separate backup location.
+
+My eventual goal is a simple 3-2-1 approach:
+
+```text
+Primary server
+     │
+     ├── Local backup
+     │
+     ├── Separate physical backup
+     │
+     └── Off-site copy
+```
+
+---
+
+## 📚 What I learned
+
+This project gave me practical experience with:
+
+- Linux administration
 - Ubuntu Server
 - Proxmox virtualization
-- Virtual machine lifecycle management
-- LVM and filesystem/storage expansion
-- DNS and public hostname configuration
-- HTTP/HTTPS web services
-- TLS certificate management
-- SSH administration
-- Firewall configuration
-- Fail2Ban and brute-force protection
-- Remote access troubleshooting
-- Client configuration
-- Capacity planning
-- System troubleshooting
-- Technical documentation
+- VM storage management
+- LVM
+- ext4
+- Apache
+- PHP
+- MariaDB
+- SSH
+- Public-key authentication
+- DNS
+- NAT / port forwarding
+- HTTPS / TLS
+- UFW
+- Fail2Ban
+- Backup and recovery
+- Troubleshooting
+- Remote administration
 
-## Troubleshooting Examples
+More importantly, I learned how these pieces depend on each other.
 
-### VM disk expansion
+A problem that looks like a Nextcloud problem can actually be DNS, NAT, Apache, TLS, firewall, Linux permissions, storage, or the database.
 
-The Proxmox virtual disk was successfully increased to 500 GiB, but the guest operating system initially still reported the smaller partition and filesystem sizes. The issue was resolved by expanding the partition with `growpart`, resizing the LVM physical volume with `pvresize`, and expanding the logical volume/filesystem.
+That's the part of systems administration I wanted to learn.
 
-### Remote access testing
+---
 
-The public IPv4 address was checked from the server with:
+## 🚧 What's next
 
-```bash
-curl -4 ifconfig.me
-```
+This project is still evolving. Some things I want to add:
 
-DNS resolution for the cloud hostname was also verified against the public address.
+- [ ] Separate backup disk
+- [ ] Test a full VM restore
+- [ ] Off-site backup
+- [ ] Storage monitoring and alerts
+- [ ] Centralized logging
+- [ ] Automated maintenance/security updates
+- [ ] Better disaster recovery documentation
+- [ ] More self-hosted services
+- [ ] Ansible automation
+- [ ] A proper network diagram
 
-### SSH protection verification
+---
 
-Fail2Ban was inspected directly rather than assuming the service was working:
+## 📁 Documentation
 
-```bash
-sudo fail2ban-client status sshd
-```
+More detailed notes are available here:
 
-## Lessons Learned
+- [Architecture](docs/ARCHITECTURE.md)
+- [Security](docs/SECURITY.md)
+- [Backup & Recovery](docs/BACKUP-AND-RECOVERY.md)
 
-- Virtual disk size, partition size, LVM physical volume size, logical volume size, and filesystem size are separate layers and may need to be expanded independently.
-- A successful Proxmox disk resize does not automatically mean the guest OS can use all of the new capacity.
-- Remote services require coordinated configuration across DNS, NAT/firewall rules, the operating system, the web server, TLS, and the application.
-- Security controls should be verified with actual status commands instead of being assumed to be active.
-- A homelab can be both a useful personal service and a realistic systems administration learning environment.
+---
 
-## Future Improvements
+## 📜 License
 
-- Automated Nextcloud backups
-- Off-site backup strategy
-- Proxmox VM backup and restore testing
-- Storage monitoring and alerting
-- More granular firewall rules
-- SSH key-based authentication
-- Regular security update automation
-- Monitoring with a dedicated observability stack
-- Additional self-hosted services
-- Disaster recovery documentation
+This project is released under the **MIT License**. See [LICENSE](LICENSE).
 
-## Project Status
+The license applies to the original documentation, scripts, and configuration examples in this repository. It does **not** change the licenses of third-party software used by the homelab, such as Nextcloud, Ubuntu, Proxmox, Apache, MariaDB, or other dependencies.
 
-**Active homelab project** — Nextcloud is operational and being used as a personal private cloud.
+---
 
-## Disclaimer
+## ⚠️ Important
 
-This is a personal homelab and learning project. Configuration details may differ from production environments. The repository intentionally documents the architecture and administrative process without publishing credentials, private keys, tokens, or other sensitive information.
+This repository documents a personal homelab. Real credentials, private keys, tokens, database passwords, and other sensitive information are intentionally **not** included.
+
+If you build something similar, don't copy credentials or expose services without understanding the security implications first.
+
+---
+
+**Status:** 🟢 Running and actively used
+
+Built as a hands-on systems administration project.
