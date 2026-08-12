@@ -35,7 +35,7 @@ The result is a personal cloud that I can use from my **iPhone, laptop, or any w
                        │
                   Public DNS
                        │
-              cloud.<my-domain>
+              cloud.dhyan09.com
                        │
                  Home Router
                        │
